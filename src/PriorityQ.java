@@ -12,19 +12,56 @@ public class PriorityQ extends PQ {
 
 	public PriorityQ(int k) {
 		super(k);
-		// TODO Auto-generated constructor stub
 	}
 
+	/**
+	 * gets the parent of the element at index
+	 * 
+	 * @param index
+	 * @return the index of the parent of the element at index
+	 */
 	static private int parent(int index) {
 		return (index - 1) / 2;
 	}
 
+	/**
+	 * gets left child of the element at index
+	 * 
+	 * @param index
+	 * @return the index of the left child of the element at index
+	 */
 	static private int left(int index) {
 		return 2 * index + 1;
 	}
 
+	/**
+	 * gets the right child of the element at index
+	 * 
+	 * @param index
+	 * @return the index of the right child of the element at index
+	 */
 	static private int right(int index) {
 		return 2 * index + 2;
+	}
+
+	/**
+	 * This is for testing: determine whether this has the heap property
+	 * @return true or false
+	 */
+	public boolean isHeap() {
+		for (int i = 0; i < this.currentSize; i++) {
+			if (this.numChildren(i) > 0) {
+				if (this.heapArray[i].compareTo(heapArray[left(i)]) > 0) {
+					return false;
+				}
+			}
+			if (this.numChildren(i) > 1) {
+				if (this.heapArray[i].compareTo(heapArray[right(i)]) > 0) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	@Override
@@ -32,15 +69,26 @@ public class PriorityQ extends PQ {
 		this.heapArray[this.currentSize] = item;
 		this.swapUp();
 		this.currentSize++;
-
 	}
 
+	/**
+	 * swaps the elements at the indicies i1 & i2
+	 * 
+	 * @param i1
+	 * @param i2
+	 */
 	private void swap(int i1, int i2) {
 		PQItem tmp = this.heapArray[i1];
 		this.heapArray[i1] = this.heapArray[i2];
 		this.heapArray[i2] = tmp;
 	}
 
+	/**
+	 * gets the number of children of the element at index
+	 * 
+	 * @param index
+	 * @return the number of children (0, 1, or 2)
+	 */
 	private int numChildren(int index) {
 		int num = 0;
 		if (left(index) < this.currentSize) {
@@ -52,11 +100,15 @@ public class PriorityQ extends PQ {
 		return num;
 	}// numChildren
 
+	/**
+	 * "swaps up" elements at the bottom of the heap to restore the heap
+	 * property
+	 */
 	private void swapUp() {
-		int index = this.currentSize; //index of the element you want to swap up
+		int index = this.currentSize; // index of the element you want to swap
+		// up
 		PQItem val = this.heapArray[this.currentSize];
 		while (index >= 1) {
-			int parent = parent(index);
 			if (val.compareTo(this.heapArray[parent(index)]) < 0) {
 				this.swap(index, parent(index));
 				index = parent(index);
@@ -66,11 +118,12 @@ public class PriorityQ extends PQ {
 		}// while
 	}// swapUp
 
+	/**
+	 * "swaps down" elements at the top of the heap to restore the heap property
+	 */
 	private void swapDown() {
 		int index = 0;
 		int smallerChildIndex = 0;
-		PQItem val = this.heapArray[0];
-		int numKids = numChildren(index);
 		while (numChildren(index) != 0) {
 			if (numChildren(index) == 1
 					|| this.heapArray[left(index)]
@@ -80,8 +133,7 @@ public class PriorityQ extends PQ {
 			else {
 				smallerChildIndex = right(index);
 			}
-			int something = this.heapArray[smallerChildIndex]
-					.compareTo(this.heapArray[index]);
+
 			if (this.heapArray[smallerChildIndex]
 					.compareTo(this.heapArray[index]) < 0) {
 				swap(index, smallerChildIndex);
@@ -97,9 +149,9 @@ public class PriorityQ extends PQ {
 	public PQItem remove() {
 		PQItem top = this.heapArray[0];
 		this.heapArray[0] = this.heapArray[this.currentSize - 1];
+		this.heapArray[currentSize - 1] = null;
 		this.currentSize--;
 		this.swapDown();
-
 		return top;
 	}
 
@@ -107,10 +159,23 @@ public class PriorityQ extends PQ {
 		return Arrays.toString(this.heapArray);
 	}
 
-	public static PQItem[] kWayMerge(PQItem[][] input) {
+	/**
+	 * merges the k sorted arrays in input into one sorted array
+	 * 
+	 * @param input
+	 *            an array of sorted arrays
+	 * @precondition input contains sorted arrays
+	 * @precondition the arrayIndexes of PQItems in each of the k arrays should
+	 *               correspond to the index of the array containing it
+	 * @post none
+	 * @return output, an array containing all the items in input in one flat,
+	 *         sorted array
+	 */
+	static public PQItem[] kWayMerge(PQItem[][] input) {
 		int k = input.length;
 		PriorityQ pq = new PriorityQ(k);
 		int currentOutput = 0; // keep track of our place in output
+		// index of the array where most recently removed item came from
 		int arrayFrom;
 		int totalVals = 0; // calculate total number of inputs
 		int[] currents = new int[k]; // keep track of the current element in
@@ -129,7 +194,7 @@ public class PriorityQ extends PQ {
 
 		while (!pq.isEmpty()) {
 			// the first element in that heap is the smallest out of all of them
-			// put that element in the output array (??)
+			// put that element in the output array
 			output[currentOutput] = pq.remove();
 			// get another element from the array the smallest item came from
 			// and put that in the heap
@@ -141,7 +206,14 @@ public class PriorityQ extends PQ {
 				// insert an element from that array and update pointer
 				pq.insert(input[arrayFrom][currents[arrayFrom]++]);
 
-			}// if
+			} else {// if that array is empty, pick another array to insert from
+				for (int i = 0; i < k; i++) {
+					if (currents[i] < input[i].length) {
+						pq.insert(input[i][currents[i]++]);
+						break;
+					}
+				}
+			}
 
 		} // while
 
@@ -149,10 +221,8 @@ public class PriorityQ extends PQ {
 	}
 
 	public static void main(String[] args) {
-		// Integer[] contents = {new Integer(8), new Integer(7), new Integer(4),
-		// new Integer(10),
-		// new Integer(15), new Integer(2), new Integer(0)};
 
+		// Experiment with the heap
 		int[] contents = { 2, 1, 3, 4, 2, 16, 4 };
 		PriorityQ pq = new PriorityQ(7);
 		int i = 0;
@@ -166,6 +236,7 @@ public class PriorityQ extends PQ {
 			System.out.println("removed: " + pq.remove().toString());
 		}
 
+		// Experiment with K-way merge of a 2d array
 		int rows = 9;
 		int cols = 7;
 		PQItem[][] test = new PQItem[rows][cols];
